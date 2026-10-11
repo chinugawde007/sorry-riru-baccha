@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff8fab; --rose:#fb6f92; --blush:#ffe5ec; --cream:#fff8f5; --ink:#5a2a3c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;font-family:'Quicksand',system-ui,sans-serif;color:var(--ink)}
+  body{
+    background:linear-gradient(160deg,#ffd6e0,#ffc2d4 40%,#e8c5ff 100%);
+    background-size:200% 200%;animation:bg 14s ease-in-out infinite;
+  }
+  @keyframes bg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  /* floating hearts */
+  .hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .hearts span{position:absolute;bottom:-40px;opacity:0;animation:rise linear infinite}
+  @keyframes rise{
+    0%{transform:translateY(0) translateX(0) scale(.6);opacity:0}
+    10%{opacity:.8}
+    100%{transform:translateY(-110vh) translateX(var(--dx)) scale(1.1) rotate(25deg);opacity:0}
+  }
+
+  /* intro envelope */
+  #intro{
+    position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#ffd6e0,#ffc2d4 50%,#e8c5ff);
+    transition:opacity .9s ease,visibility .9s;text-align:center;padding:24px;
+  }
+  #intro.hide{opacity:0;visibility:hidden}
+  .env{font-size:84px;animation:beat 1.6s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(251,111,146,.4))}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  #intro h1{font-family:'Dancing Script',cursive;font-size:2.4rem;margin:18px 0 6px;color:var(--rose)}
+  #intro p{opacity:.75;margin-bottom:26px}
+  .btn{
+    border:none;border-radius:999px;padding:14px 34px;font:600 1.05rem 'Quicksand',sans-serif;color:#fff;
+    background:linear-gradient(135deg,var(--pink),var(--rose));box-shadow:0 10px 24px rgba(251,111,146,.45);
+    cursor:pointer;transition:transform .2s;
+  }
+  .btn:active{transform:scale(.95)}
+
+  /* slider */
+  #app{position:fixed;inset:0;z-index:1;opacity:0;transition:opacity 1s ease .3s}
+  #app.show{opacity:1}
+  .track{display:flex;height:100%;width:100%;transition:transform .7s cubic-bezier(.65,.05,.25,1);will-change:transform}
+  .slide{
+    flex:0 0 100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:max(24px,env(safe-area-inset-top)) 22px 120px;gap:22px;
+  }
+  .photo{
+    width:min(72vw,300px);aspect-ratio:3/4;border-radius:26px;background:#fff;padding:10px 10px 38px;
+    box-shadow:0 20px 40px rgba(150,60,90,.28);position:relative;
+    opacity:0;transform:translateY(30px) rotate(-3deg) scale(.94);transition:all .8s ease .35s;
+  }
+  .slide:nth-child(even) .photo{transform:translateY(30px) rotate(3deg) scale(.94)}
+  .slide.active .photo{opacity:1;transform:rotate(-3deg)}
+  .slide.active:nth-child(even) .photo{transform:rotate(3deg)}
+  .photo .frame{width:100%;height:100%;border-radius:18px;overflow:hidden;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:56px}
+  .photo img,.photo video{width:100%;height:100%;object-fit:cover;display:block}
+  .photo::after{content:'♡';position:absolute;bottom:6px;right:16px;font-size:22px;color:var(--rose)}
+  .tape{position:absolute;top:-12px;left:50%;width:84px;height:26px;transform:translateX(-50%) rotate(-4deg);background:rgba(255,214,224,.85);border-radius:4px}
+
+  .card{
+    max-width:420px;text-align:center;background:rgba(255,255,255,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.8);border-radius:24px;padding:20px 22px;box-shadow:0 10px 30px rgba(150,60,90,.15);
+    opacity:0;transform:translateY(20px);transition:all .8s ease .6s;
+  }
+  .slide.active .card{opacity:1;transform:none}
+  .card p{font-family:'Dancing Script',cursive;font-size:1.55rem;line-height:1.4;font-weight:600;color:var(--ink)}
+  .card .small{font-family:'Quicksand';font-size:.85rem;opacity:.65;margin-top:8px}
+
+  /* controls */
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 0 max(22px,env(safe-area-inset-bottom))}
+  .dots{display:flex;gap:8px}
+  .dots i{width:8px;height:8px;border-radius:50%;background:rgba(251,111,146,.35);transition:all .4s}
+  .dots i.on{width:26px;border-radius:8px;background:var(--rose)}
+  .arrows{display:flex;gap:16px}
+  .arrow{width:50px;height:50px;border-radius:50%;border:none;background:#fff;color:var(--rose);font-size:20px;box-shadow:0 6px 16px rgba(150,60,90,.2);cursor:pointer;transition:transform .2s,opacity .3s}
+  .arrow:active{transform:scale(.9)}
+  .arrow.off{opacity:.3;pointer-events:none}
+  #mute{position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;z-index:6;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.8);font-size:18px;box-shadow:0 4px 12px rgba(150,60,90,.2)}
+  .hint{position:fixed;top:max(22px,env(safe-area-inset-top));left:0;right:0;text-align:center;font-size:.8rem;opacity:.55;z-index:4;pointer-events:none}
+
+  #forgive{margin-top:14px}
+  .burst{position:fixed;font-size:24px;pointer-events:none;z-index:60;animation:burst 1.4s ease-out forwards}
+  @keyframes burst{to{transform:translate(var(--bx),var(--by)) scale(1.4) rotate(40deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="hearts" id="hearts"></div>
+
+<div id="intro">
+  <div class="env">💌</div>
+  <h1>Something for you</h1>
+  <p>Tap to open, and keep your sound on</p>
+  <button class="btn" id="open">Open</button>
+</div>
+
+<button id="mute" aria-label="Toggle music">🔊</button>
+<div class="hint">swipe or tap the arrows</div>
+
+<div id="app">
+  <div class="track" id="track">
+
+    <!-- SLIDE 1: put your photo at photos/1.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/1.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card"><p>There is something I need to say, and it comes from the very bottom of my heart.</p></div>
+    </section>
+
+    <!-- SLIDE 2: photos/2.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/2.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card"><p>I am so terribly, deeply sorry for what happened today. It sits on my heart heavier than any words can hold.</p></div>
+    </section>
+
+    <!-- SLIDE 3: photos/3.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/3.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card"><p>I never meant to take your feelings for granted, and I never will. You should never have a reason to doubt my trust, and I am sorry for letting even a shadow fall across it.</p></div>
+    </section>
+
+    <!-- SLIDE 4: photos/4.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/4.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card"><p>Everything I say and everything I do will come from the bottom of my heart, with intentions as pure as they come. And I promise to live up to every word.</p></div>
+    </section>
+
+    <!-- SLIDE 5: photos/5.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/5.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card"><p>I love you with all of my heart, body and soul. You are the most special person in my world, and the only one.</p></div>
+    </section>
+
+    <!-- SLIDE 6: photos/6.jpg -->
+    <section class="slide">
+      <div class="photo"><div class="tape"></div><div class="frame"><img src="photos/6.jpg" alt="" onerror="this.replaceWith('📷')"></div></div>
+      <div class="card">
+        <p>I want to be your most caring boyfriend, and one day, your husband.</p>
+        <p class="small">Will you forgive me?</p>
+        <button class="btn" id="forgive">Yes, I forgive you 💗</button>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <div class="dots" id="dots"></div>
+    <div class="arrows">
+      <button class="arrow" id="prev" aria-label="Previous">←</button>
+      <button class="arrow" id="next" aria-label="Next">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- Put your song at audio/song.mp3 -->
+<audio id="song" src="audio/song.mp3" loop preload="auto"></audio>
+
+<script>
+(function(){
+  // floating hearts
+  var hearts=document.getElementById('hearts'),sym=['💗','💖','💕','🌸','✨','💞'];
+  for(var i=0;i<18;i++){
+    var s=document.createElement('span');
+    s.textContent=sym[i%sym.length];
+    s.style.left=Math.random()*100+'%';
+    s.style.fontSize=(14+Math.random()*20)+'px';
+    s.style.animationDuration=(9+Math.random()*10)+'s';
+    s.style.animationDelay=(-Math.random()*14)+'s';
+    s.style.setProperty('--dx',(Math.random()*80-40)+'px');
+    hearts.appendChild(s);
+  }
+
+  var track=document.getElementById('track'),
+      slides=[].slice.call(track.children),
+      dotsEl=document.getElementById('dots'),
+      prev=document.getElementById('prev'),next=document.getElementById('next'),
+      song=document.getElementById('song'),mute=document.getElementById('mute'),
+      idx=0;
+
+  slides.forEach(function(){dotsEl.appendChild(document.createElement('i'))});
+  var dots=[].slice.call(dotsEl.children);
+
+  function go(n){
+    idx=Math.max(0,Math.min(slides.length-1,n));
+    track.style.transform='translateX(-'+idx*100+'%)';
+    slides.forEach(function(s,i){s.classList.toggle('active',i===idx)});
+    dots.forEach(function(d,i){d.classList.toggle('on',i===idx)});
+    prev.classList.toggle('off',idx===0);
+    next.classList.toggle('off',idx===slides.length-1);
+  }
+  prev.onclick=function(){go(idx-1)};
+  next.onclick=function(){go(idx+1)};
+
+  // swipe
+  var sx=0,sy=0;
+  document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)) go(idx+(dx<0?1:-1));
+  },{passive:true});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight')go(idx+1); if(e.key==='ArrowLeft')go(idx-1);
+  });
+
+  // open + music (browsers need a tap before audio can play)
+  document.getElementById('open').onclick=function(){
+    document.getElementById('intro').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    song.volume=.7;
+    var p=song.play(); if(p&&p.catch)p.catch(function(){});
+    go(0);
+  };
+  mute.onclick=function(){
+    if(song.paused){song.play();mute.textContent='🔊'}else{song.pause();mute.textContent='🔇'}
+  };
+
+  // heart burst on forgive
+  document.getElementById('forgive').onclick=function(e){
+    var r=e.target.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    for(var i=0;i<26;i++){
+      var b=document.createElement('div');b.className='burst';
+      b.textContent=sym[i%sym.length];
+      b.style.left=cx+'px';b.style.top=cy+'px';
+      var a=Math.random()*Math.PI*2,d=90+Math.random()*180;
+      b.style.setProperty('--bx',Math.cos(a)*d+'px');
+      b.style.setProperty('--by',Math.sin(a)*d+'px');
+      document.body.appendChild(b);
+      setTimeout(function(x){x.remove()},1500,b);
+    }
+    e.target.textContent='I love you 💞';
+  };
+
+  go(0);
+})();
+</script>
+</body>
+</html>
